@@ -23,7 +23,7 @@ void CClock::Render(CMemoryDC& dc, CPoint position)	// Ցուցադրման մե
 	dcMemory.CreateCompatibleDC(dc);	// Ստեղծում ենք համապատասխան նկարելու կոնտեքստ ներկա նկարչի հետ
 	dcMemory.SelectObject(&bmp);	// Նկար-ցուցիչի տեղադրում
 
-	dc->TransparentBlt(position.x, position.y, m_width, m_height, &dcMemory, 0, 0, m_width, m_height, RGB(0, 0, 0)); // Պատկերի նկարում վերածում ընդհանուր կոնտեքստում, հաշվի առնելով թափանցիկ գույնը
+	dc->TransparentBlt(position.x, position.y, m_width, m_height, &dcMemory, 0, 0, m_width, m_height, RGB(0, 0, 0)); // Պատկերի նկարու վերածում ընդհանուր կոնտեքստում, հաշվի առնելով թափանցիկ գույնը
 
 	if (m_time)	// Եթե էվոլյուցիաների կոչի ռեժիմը ավտոմատ է
 	{
