@@ -6,12 +6,19 @@
 #include "Protoblast.h"
 #include "AboutDialog.h"
 #include <fstream>
+#include "EnterIDDialog.h"
+#include <afxdb.h>
+#include "resource.h"
+#include "CMyDialog.h"
+
 BEGIN_MESSAGE_MAP(CGameApp, CWinApp)	// Ծրագրավորման հաղորդագրությունների արգելակման մակրո
 	ON_COMMAND_RANGE(ID_EVOLVE_1_SECOND, ID_EVOLVE_HAND, &CGameApp::OnEvolve)	// Էվոլուցիայի արագության ընտրության հաղորդագրություններ
 	ON_COMMAND(ID_APP_ABOUT, &CGameApp::OnAppAbout)		// Հաղորդագրություն "Ամբողջության մասին" բաժին դիտելու հետաքրքրության համար
 	ON_COMMAND(ID_NEW_GAME, &CGameApp::OnNewGame)		// Ովքե՞ր ուզում են սկսել նոր խաղ - ահա հաղորդագրությունը
 	ON_COMMAND(ID_OPEN_GAME, &CGameApp::OnOpenGame)		// "Բացել խաղ" հաղորդագրությունը
 	ON_COMMAND(ID_SAVE_GAME, &CGameApp::OnSaveGame)		// "Հասարակություն պահպանել" հաղորդագրությունը
+	ON_COMMAND(ID_SAVE_TO_DB, &CGameApp::OnSaveToDb)
+	ON_COMMAND(ID_OPEN_FROM_DB, &CGameApp::OnOpenFromDb)
 END_MESSAGE_MAP()	// Ծրագրավորման հաղորդագրությունների արգելակման մակրոյի ավարտ
 
 CGameApp::CGameApp()	// Կոնստրուկտոր
@@ -359,7 +366,7 @@ void CGameApp::OnAppAbout()	// "Ծրագրի մասին" մենյուի բացմ
 
 void CGameApp::OnOpenGame()	// "Բացել խաղը" մենյուի բացման մեթոդ
 {
-	m_pause = true;	// Վարում ենք paus 
+	
 
 	CFileDialog dialog(TRUE, _T("*.life"), _T(""), 0, _T("games fil (*.life)|*.life|"));	// Ստեղծում ենք ֆայլի բացման երկխոսություն
 
@@ -437,4 +444,236 @@ void CGameApp::OnNewGame()	// "Նոր խաղ" մենյուի բացման մեթ
 		CreateNewGame();	// Եթե համաձայն են նոր խաղի, ապա այն ստեղծում ենք
 
 	m_pause = false;	// Պաուզան ավարտվել է
+}
+void CGameApp::OnSaveToDb() {
+	// Create a database connection
+	
+	CDatabase database;
+	if (!ConnectToDatabase(database)) {
+		return; // Connection failed, exit
+	}
+
+	// Generate a unique GameID
+	GUID guid;
+	CoCreateGuid(&guid);
+	CString gameID;
+	LPOLESTR guidString;
+	StringFromCLSID(guid, &guidString);
+	int randomNumber = 1000000 + rand() % (9999999 - 1000000 + 1);
+
+	// Convert the number to CString
+	gameID.Format(_T("%d"), randomNumber);
+	// Serialize game data into JSON format
+	CString gameData = _T("[");
+	for (int i = 0; i < m_fieldHeight; ++i) {
+		for (int j = 0; j < m_fieldWidth; ++j) {
+			if (m_field[i][j]->IsLive()) {
+				CString cell;
+				cell.Format(_T("{\"x\":%d,\"y\":%d},"), i, j);
+				gameData += cell;
+			}
+		}
+	}
+	if (gameData[gameData.GetLength() - 1] == ',') {
+		gameData.Delete(gameData.GetLength() - 1); // Remove trailing comma
+	}
+	gameData += _T("]");
+
+	try {
+		// Prepare the SQL INSERT query
+		CString query;
+		query.Format(_T("INSERT INTO GameRecords (GameID, GameData) VALUES ('%s', '%s');"),
+			gameID, gameData);
+
+		// Execute the query
+		database.ExecuteSQL(query);
+
+		// Show success message with GameID
+		CString message;
+		message.Format(_T("Game saved successfully with GameID: %s"), gameID);
+		AfxMessageBox(message);
+	}
+	catch (CDBException* e) {
+		// Show error message
+		AfxMessageBox(e->m_strError);
+		e->Delete();
+	}
+
+	database.Close(); // Close the database connection
+}
+
+void CGameApp::OnOpenFromDb() {
+	// Step 1: Connect to the database
+	CMyDialog dlg;
+	CString strValue;
+
+	// Display the dialog and wait for user input
+	if (dlg.DoModal() == IDOK)  // If the user clicked "OK"
+	{
+		// Retrieve the text from the dialog's CEdit control
+		int strGameId = dlg.GetGameIdText();
+		strValue.Format(_T("%d"), strGameId);
+		// Do something with the retrieved text (e.g., display it);
+		// You can now use `strGameId` for further processing
+	}
+	else
+	{
+		// If user pressed "Cancel", handle it here
+		AfxMessageBox(_T("Operation cancelled!"));
+	}
+	CDatabase database;
+	if (!ConnectToDatabase(database)) {
+		return; // Connection failed, exit
+	}
+
+	// Step 2: Get the GameID (hardcoded or retrieved via a dialog, assuming you get it somewhere)
+	CString gameID = _T("your_game_id_here"); // This should be obtained dynamically
+
+	try {
+		// Step 3: Prepare the query to load game data
+		CString query;
+		query.Format(_T("SELECT GameData FROM GameRecords WHERE GameID = '%s';"), strValue);
+
+		CRecordset recordset(&database);
+		recordset.Open(CRecordset::forwardOnly, query, CRecordset::readOnly);
+
+		// Step 4: Ensure we have results
+		if (recordset.IsEOF()) {
+			AfxMessageBox(_T("No game found with the provided Game ID."));
+			recordset.Close();
+			database.Close();
+			return;
+		}
+
+		// Step 5: Retrieve the GameData
+		CString gameData;
+		recordset.GetFieldValue(_T("GameData"), gameData);
+
+		// Step 6: Deserialize and Load Game Data
+		DeserializeGameData(gameData);
+
+		AfxMessageBox(_T("Game loaded successfully."));
+	}
+	catch (CDBException* e) {
+		AfxMessageBox(e->m_strError);
+		e->Delete();
+	}
+
+	// Step 7: Clean up
+	database.Close();
+}
+void CGameApp::DeserializeGameData(const CString& gameData) {
+	// Clear the current game field
+	CreateNewGame();
+
+	// Parse JSON-like format (assumes format: [{"x":X1,"y":Y1},{"x":X2,"y":Y2},...])
+	int x, y;
+	CString token;
+	int start = 0;
+	int end = gameData.Find(_T("},{"));
+
+	while (end != -1) {
+		token = gameData.Mid(start + 1, end - start);
+		_stscanf_s(token, _T("\"x\":%d,\"y\":%d"), &x, &y);
+		if (x >= 0 && x < m_fieldHeight && y >= 0 && y < m_fieldWidth) {
+			m_field[x][y]->Click(); // Activate cell
+		}
+		start = end + 2;
+		end = gameData.Find(_T("},{"), start);
+	}
+
+	// Handle the last token
+	token = gameData.Mid(start + 1, gameData.GetLength() - start - 2);
+	_stscanf_s(token, _T("\"x\":%d,\"y\":%d"), &x, &y);
+	if (x >= 0 && x < m_fieldHeight && y >= 0 && y < m_fieldWidth) {
+		m_field[x][y]->Click();
+	}
+}
+
+void CGameApp::SaveGameToDatabase(const CString& gameID, const CString& gameData) {
+	CDatabase database;
+	database.OpenEx(_T("Driver={SQL Server};Server=LAPTOP-LFM7N0I4;Database=AnahitGame;Trusted_Connection=Yes;"));
+
+	CString query;
+	query.Format(_T("INSERT INTO GameRecords (GameID, GameData) VALUES ('%s', '%s')"), gameID, gameData);
+
+	try {
+		database.ExecuteSQL(query);
+		AfxMessageBox(_T("Game saved successfully!"));
+	}
+	catch (CDBException* e) {
+		AfxMessageBox(e->m_strError);
+		e->Delete();
+	}
+
+	database.Close();
+}
+
+CString CGameApp::LoadGameFromDatabase(const CString& gameID ) {
+	// Step 1: Connect to the database
+	CDatabase database;
+	if (!ConnectToDatabase(database)) {
+		AfxMessageBox(_T("No nd with the provided Game ID."));
+		;
+	}
+
+	// Step 2: Get the GameID (hardcoded or retrieved via a dialog, assuming you get it somewhere)
+	CString gameID1 = _T("{136004A5-B327-492E-8175-28A36F8EEFAA}"); // This should be obtained dynamically
+
+	try {
+		// Step 3: Prepare the query to load game data
+		CString query;
+		query.Format(_T("SELECT GameData FROM GameRecords WHERE ID = 1"));
+
+		CRecordset recordset(&database);
+		recordset.Open(CRecordset::forwardOnly, _T("SELECT GameData FROM GameRecords WHERE ID = 1"), CRecordset::readOnly);
+
+		// Step 4: Ensure we have results
+		if (recordset.IsEOF()) {
+			AfxMessageBox(_T("No game found with the provided Game ID."));
+			recordset.Close();
+			database.Close();
+			;
+		}
+
+		// Step 5: Retrieve the GameData
+		CString gameData;
+		recordset.GetFieldValue(_T("GameData"), gameData);
+
+		// Step 6: Deserialize and Load Game Data
+		DeserializeGameData(gameData);
+
+		AfxMessageBox(_T("Game loaded successfully."));
+	}
+	catch (CDBException* e) {
+		AfxMessageBox(e->m_strError);
+		e->Delete();
+	}
+
+	// Step 7: Clean up
+	database.Close();
+	return NULL;
+}
+
+CString CGameApp::SerializeGameData() {
+	// Replace with actual game state serialization
+	return _T("[{\"x\":1,\"y\":1},{\"x\":2,\"y\":3}]");
+}
+
+
+bool CGameApp::ConnectToDatabase(CDatabase& database) {
+	// Define the connection string
+	CString connectionString = _T("Driver={SQL Server};Server=LAPTOP-LFM7N0I4;Database=AnahitGame;Trusted_Connection=Yes;");
+
+	try {
+		// Open the database connection using the connection string
+		database.OpenEx(connectionString, CDatabase::noOdbcDialog);
+		return true;  // Successfully connected
+	}
+	catch (CDBException* e) {
+		// If an error occurs, display the error message
+		AfxMessageBox(e->m_strError);
+		e->Delete();
+		return false;  // Connection failed
+	}
 }

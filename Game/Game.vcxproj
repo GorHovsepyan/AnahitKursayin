@@ -106,7 +106,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDialog.h" />
+    <ClInclude Include="CEnterIDDialog.h" />
     <ClInclude Include="Clock.h" />
+    <ClInclude Include="CMyDialog.h" />
+    <ClInclude Include="EnterIDDialog.h" />
     <ClInclude Include="MemoryDC.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="Game.h" />
@@ -121,6 +124,8 @@
     <ClCompile Include="AboutDialog.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="CMyDialog.cpp" />
+    <ClCompile Include="EnterIDDialog.cpp" />
     <ClCompile Include="Game.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>

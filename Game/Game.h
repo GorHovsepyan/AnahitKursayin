@@ -9,6 +9,7 @@
 #include "Protoblast.h"
 #include "Clock.h"
 #include <vector>
+#include <afxdb.h>
 
 /* Խաղի տրամաբանության կլաս, որը ժառանգում է Windows հավելվածի կլասից */
 class CGameApp : public CWinApp
@@ -19,7 +20,8 @@ public:
 
 	BOOL InitInstance();	// Մեթոդ, որը սկսում է պատուհանի իнициалիզացիան
 	int ExitInstance();		// Մեթոդ, որը դուրս է գալիս
-
+	void OnSaveToDb();
+	void OnOpenFromDb();
 	CSize GetFieldSize();	// Մեթոդ, որը վերադարձնում է խաղային դաշտի չափերը
 	void LeftButtonDoubleClick(UINT, CPoint);	// Մեթոդ, որը պատասխանատու է ձախ մկնիկի կրկնակի սեղմման համար
 	void LeftButtonDown(UINT, CPoint);	// Մեթոդ, որը պատասխանատու է ձախ մկնիկի սեղմման համար
@@ -42,10 +44,14 @@ public:
 	DECLARE_MESSAGE_MAP() // Կլասի վերջի մակրո, որը հայտարարում է զետեղված հաղորդագրությունները
 
 private:
+	bool ConnectToDatabase(CDatabase& database);
+	void CGameApp::DeserializeGameData(const CString& gameData);
 	static const int m_fieldHeight = 69;	// Խաղային դաշտի բարձրությունը
 	static const int m_fieldWidth = 56;		// Խաղային դաշտի լայնությունը
 	static const int m_fps = 25;			// Վայրկյանում նկարահանման հաճախությունը
-
+	void SaveGameToDatabase(const CString& gameID, const CString& gameData);
+	CString LoadGameFromDatabase(const CString& gameID);
+	CString SerializeGameData();
 	std::vector < std::vector < CProtoblast* > > m_field;	// Խաղային դաշտի վրա գտնվող կետերի երկու չափանիշների զանգված
 	CPoint m_oldMousePosition;	// Մկնիկի նախկին դիրքը
 	CPoint m_hoverCell;		// Ընդգծված բջիջ
