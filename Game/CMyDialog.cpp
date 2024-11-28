@@ -28,7 +28,7 @@ int CMyDialog::GetGameIdText()
 {
     
     
-    int intValue = _ttoi(m_GameID); // Use _tto for Unicode/ANI compatibility
+    int intValue = _ttoi(m_GameID); // Use _tto for Uncode/ANI compatibility
 
     return intValue;
 }
