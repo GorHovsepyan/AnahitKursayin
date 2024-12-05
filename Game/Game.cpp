@@ -19,6 +19,8 @@ BEGIN_MESSAGE_MAP(CGameApp, CWinApp)	// Ծրագրավորման հաղորդա�
 	ON_COMMAND(ID_SAVE_GAME, &CGameApp::OnSaveGame)		// "Հասարակություն պահպանել" հաղորդագրությունը
 	ON_COMMAND(ID_SAVE_TO_DB, &CGameApp::OnSaveToDb)
 	ON_COMMAND(ID_OPEN_FROM_DB, &CGameApp::OnOpenFromDb)
+	ON_COMMAND(Id_showDb, &CGameApp::OnShowDb)
+
 END_MESSAGE_MAP()	// Ծրագրավորման հաղորդագրությունների արգելակման մակրոյի ավարտ
 
 CGameApp::CGameApp()	// Կոնստրուկտոր
@@ -459,6 +461,7 @@ void CGameApp::OnSaveToDb() {
 	CString gameID;
 	LPOLESTR guidString;
 	StringFromCLSID(guid, &guidString);
+	srand(time(0));
 	int randomNumber = 1000000 + rand() % (9999999 - 1000000 + 1);
 
 	// Convert the number to CString
@@ -675,5 +678,38 @@ bool CGameApp::ConnectToDatabase(CDatabase& database) {
 		AfxMessageBox(e->m_strError);
 		e->Delete();
 		return false;  // Connection failed
+	}
+}
+void CGameApp::OnShowDb() {
+	try {
+		CDatabase db;
+		db.OpenEx(_T("Driver={SQL Server};Server=LAPTOP-LFM7N0I4;Database=AnahitGame;Trusted_Connection=Yes;"));
+
+		CString query = _T("SELECT GameID, GameData FROM GameRecords;");
+		CRecordset rs(&db);
+
+		rs.Open(CRecordset::forwardOnly, query);
+
+		CString result = _T("Game ID\tGame Data\n");
+		result += _T("=========================\n");
+
+		while (!rs.IsEOF()) {
+			CString gameID, gameData;
+
+			rs.GetFieldValue((short)0, gameID);   // Fetch GameID
+			rs.GetFieldValue((short)1, gameData); // Fetch GameData
+
+			result.AppendFormat(_T("%s\t%s\n"), gameID, gameData);
+			rs.MoveNext(); // Move to the next record
+		}
+
+		AfxMessageBox(result); // Display the data in a message box
+
+		rs.Close();
+		db.Close();
+	}
+	catch (CDBException* e) {
+		AfxMessageBox(e->m_strError); // Show error if database operation fails
+		e->Delete();
 	}
 }

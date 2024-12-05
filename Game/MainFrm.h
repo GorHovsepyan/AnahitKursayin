@@ -15,6 +15,7 @@ public:
 private:
 	CStatusBar m_wndStatusBar;	// Ստատուս-բար
 	CChildView m_wndView;		// Տեսք
+	void OnShowDb(); // Method to handle showing database data
 
 	afx_msg void OnTimer(UINT);				// Զետեղված հաղորդագրության ժամանակացույցի տիկի մեթոդ
 	afx_msg int OnCreate(LPCREATESTRUCT);	// Զետեղված հաղորդագրության ստեղծման մեթոդ

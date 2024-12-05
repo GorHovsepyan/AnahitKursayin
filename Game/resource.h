@@ -22,6 +22,8 @@
 #define ID_FILE_OPENFROMDB              32788
 #define ID_SAVE_TO_DB                   32789
 #define ID_OPEN_FROM_DB                 32790
+#define ID_FILE_SHOWDB                  32791
+#define Id_showDb                       32792
 #define IDC_EDIT_GAME_ID                32793
 #define IDC_EDIT_GAME_ID2               32794
 
@@ -30,7 +32,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
-#define _APS_NEXT_COMMAND_VALUE         32791
+#define _APS_NEXT_COMMAND_VALUE         32793
 #define _APS_NEXT_CONTROL_VALUE         1004
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

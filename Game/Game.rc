@@ -109,6 +109,7 @@ BEGIN
         MENUITEM "Exit",                        ID_APP_EXIT
         MENUITEM "save to db",                  ID_SAVE_TO_DB
         MENUITEM "open from db",                ID_OPEN_FROM_DB
+        MENUITEM "showDb",                      Id_showDb
     END
     POPUP "View"
     BEGIN

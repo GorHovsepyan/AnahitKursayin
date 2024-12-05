@@ -60,6 +60,7 @@ private:
 	int m_evolveTime;		// Զարգացումների միջակայքի ժամանակը
 	int m_tickCount;		// Վերջին զարգացման պահից անցած ժամանակը
 	bool m_pause;			// Խաղը pausա՞ է, թե ոչ
+	void OnShowDb(); // Method to handle showing database data
 
 	bool MousePositionToXY(CPoint, CPoint&);	// Մեթոդ, որը փոխում է մկնիկի կոորդինատները դաշտի բջիջների կոորդինատներին
 	void FreeField();		// Մեթոդ, որը ազատում է խաղային դաշտը
